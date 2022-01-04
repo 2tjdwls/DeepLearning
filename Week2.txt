@@ -1,0 +1,62 @@
+Week.2
+<Logistic Regression as a Neural Network>
+#1
+신경망 구현
+-m개의 학습 표본을 가진 학습 set가 있으면 m개의 학습 표본에 대해 for문을 돌리면서 전체 학습 set에 적용시키지 않는다
+-신경망으로 계산할 때 순방향경로(순전파), 역방향경로(역전파)를 이용
+
+*로지스틱 회귀 : 이진 분류를 위한 알고리즘, 지도학습 문제에서 결과값 레이블 Y의 값이 0or1인 경우 사용되는 학습 알고리즘
+ex) 고양이 이미지를 input으로 해서 1(cat) vs 0(non cat) 로 lable하고자 함
+이미지의 픽셀 채도값을 특징벡터(Feature vector)로 변환 -> 전체 픽셀값을 하나의 입력 특징벡터 x에 펼침 -> 특빙벡터 정의 : 각 픽셀값을 특징벡터의 요소(feature)로 나열 -> 이미지가 64x64라면, 특징벡터는 이미지의 RGB 모두를 포함하기 때문에 64x64x3개의 요소를 가짐 -> n_x=12288
+
+* 하나의 학습표본은 순서쌍 (x,y)로 표기 : x는 x차원을 가진 특징벡터, y는 0/1의 값을 가지는 레이블, 학습 set는 m개의 학습표본(sample)을 가짐 (m_train)
+* Test set에서는 test표본의 수를 m_test로 표현
+* 대문자 X : 행렬로 정의 [행 : 학습표본이 몇개의 요소(feature)로 되어있는가(feature수 : n_x), 열 : 학습표본(sample)이 몇개인가(sample수 : m)] -> n_x*m행렬 (X.shape = (n_x,m))
+* 출력행렬 Y : 1행 m열 -> 1*m행렬 (Y.shape = (1,m))
+
+#2
+-로지스틱 회귀
+y^ : Y의 평균(Y는 주어진 입력 특성 X가 되는 확률로 만든다)
+ex) X가 이미지일 때 y^은 '이 이미지가 고양이일 확률은?'
+로지스틱 회귀분석법의 매개변수 W는 x차원 벡터, 실수 b도 x차원 벡터 -> y^ = w*x+b로 둔다면, 이는 선형회귀에서는 사용되지만 이항분류문제에서는 사용하지 않음 (y^이 Y가 1일 확률이 되도록 만드는 것이 좋기 때문)
+따라서 0<=y^<=1 이어야 함, y^=σ(w*x+b) : Sigmoid function
+*Sigmoid function : σ(z)는 z가 +∞로 가면 1에 수렴, -∞로 가면 0에 수렴, 원점에선 0.5의 값을 가지는 함수
+
+#3
+로지스틱 회귀 모델의 매개변수 w와 b를 주어진 m개의 훈련 샘플로 학습할 때 이 훈련 세트를 바탕으로 출력한 y^(i)의 예측값이 훈련 세트에 포함된 참값 y(i)에 가까워지도록 해야함 
+위 첨자 (i) : i번째 훈련 샘플에 관한 데이터임을 뜻함
+
+- 손실함수(Loss function or Error function)
+L(y^,y) : 출력된 y의 예측값(y^)과 참값 y사이에 오차가 얼마나 큰지 측정
+만약 Error function을 1/2(y^-y)^2으로 정의한다면, 이는 매개 변수들을 학습하기 위해 풀어야할 최적화 함수가 볼록하지 않고, 여러개의 지역 최솟값을 갖기 떄문에 경사 하강법에서 전역 최솟값을 찾지 못할 수 있기 때문에 로지스틱 회귀에서는 위 Error function정의를 사용하지 않는다 -> 따라서 위와 비슷하지만, 최적화 함수가 볼록해지는 Error function 정의
+L(y^,y) = -(ylog(y^) + (1-y)log(1-y^))
+* Error function은 훈련 샘플 하나에 관하여 정의돼서 그 하나가 얼마나 잘 예측되었는지 측정
+
+- 비용함수(Cost function
+* 훈련 세트 전체에 대해 얼마나 잘 추측되었는지 측정해주는 함수
+J(w,b)=1/m*Σ(i=1~m)L(y^(i),y(i)) : 매개변수 w와 b에 대해 Error function을 각각의 훈련 샘플에 적용한 값의 합들의 평균
+y^은 로지스틱 회귀 알고리즘이 정해진 매개 변수들 w와 b를 적용해서 출력하는 값, 위의 Error function을 식에 대입하면 -> -1/m*Σ(i=1~m)(y(i)logy^(i)+(1-y(i)log(1-y^(i))))
+* Error function은 하나의 훈련샘플에 적용을 한다, Cost function은 매개 변수의 Cost처럼 작용 -> 로지스틱 회귀 모델을 학습한다 = Cost function J를 최소화해주는 w와 b를 찾는 것
+ 
+ #4
+ Cost function은 Training set에서 파라미터 w와 b가 얼마나 잘 하는지를 측정 -> w,b가 J(w,b)를 최소화시키는 값을 찾는다
+ w와 b를 매개변수로 하는 볼록한 평면 모양의 J(w,b)를 보여줌 (단, w는 더 높은 차원일 수 있지만, 표현을 위해 실수라고 가정) -> 여기서 J(w,b)는 볼록함수이고, 이 때 J(w,b)가 최솟값을 가지는 지점을 찾아야함 (J(w,b)평면과 wb평면간 높이는 각 지점에서의 J(w,b)의 값을 나타냄)
+ 파라미터 w,b의 적합한 값을 찾기 위해선 w와 b를 최초값으로 초기화(Initialization)해야함, 로지스틱 회귀분석에서는 거의 모든 초기화 방법이 잘 구현됨, 일반적으로 0으로 초기화, 위 함수는 볼록함수이기 때문에 어느 지점에서 초기화를 하든 똑같거나 비슷한 점에 도달하게 될 것
+ Gradient descent(기울기 강하)는 처음 시작점에서 시작해서 최대한 빠른 속도로 가장 기울기가 높은 내리막길 방향으로 이동, 기울기 강하는 결과적으로 이상적으로는 전역최적점 또는 그 근접한 지점에 도달 
+ 직관적으로 이해하기 위해 w만을 매개변수로 하는 1차원 Cost function도입 -> J(w)는 단지 좌표평면에서 볼록함수의 모양
+ 기울기 강하가 진행될수록 w를 update시킨다
+ Repeat {
+ 	w := w-αdJ(w)/dw // :는 update, α는 learning rate(한번에 얼만큼 기울기 강하를 진행할 수 있는지 조절하는 parameter
+ }					 // derivative : update 또는 w에 얼마나 변화를 줄지 여부를 알려주는 값)
+Gradient descent를 하는 programming을 할 땐 dw 변수로 derivative항을 표시한다
+실제로 Cost function은 w와 b를 매개변수로 하는 함수이기 때문에 실제 도입하는 업데이트는 -> Gradient descent : w := w-αdJ(w,b)/dw / b := b-αdJ(w,b)/dw
+만약 J가 w,b뿐만 아니라 그 이상의 매개변수를 가진다면 편미분 표기를 사용(∂) -> Programming에서는 ∂J(w,b)/∂w = dw / ∂J(w,b)/∂b = db 로 표시
+
+#5
+***Back propagation을 programming할 때 우리가 최적화 시키고 싶은 결과값 변수(Computation graph에서 마지막 node)의 derivative를 dvar라고 표시할 것
+*** dv = dJ/dv, da = dJ/da로 표시
+
+#6
+로지스틱 회귀분석을 위한 Gradient descent를 Computation graph를 이용해서 계산하는 fomula
+
+<Python and Vectorizaiton>

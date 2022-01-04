@@ -8,7 +8,7 @@ DeepLearning : 신경망의 트레이닝
 ex) size of house를 input으로 해서 price를 예측해서 output하는 ReLU함수(Rectified Linear Unit Function)
 Neural Network : Input(size of house) -> node('Neuron') -> Output(price)
 Input의 종류 증가 : Stack (ex. size, #rooms, zip code wealth -> family size, walkability, school quaility... -> price)
-
+t
 #2
 Supervised Learning
 Example
