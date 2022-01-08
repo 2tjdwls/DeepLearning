@@ -179,3 +179,29 @@ db = 1/m*np.sum(dz)
 
 w := w-αdw
 b := b-αdb
+
+#5
+Broadcasting
+
+		  Apples	Beef	Eggs	Potatoes
+Carb  	[ 56.0		0.0		4.4		68.0	]
+Protein [ 1.2		104.0	52.0	8.0		]	-> 3x4 data matrix
+Fat		[ 1.8		135.0	99.0	0.9		]
+-> 위 3x4 data matrix에서 각 음식별 총 칼로리와, 탄수화물, 단백질, 지방이 총 칼로리에서 차지하는 퍼센트를 for loop없이 계산 (low data만 꺼내와서 계산) -> Vectorizaiton 이용
+-> 위 3x4 data matrix를 matrix A로 정의 후 low끼리 더해서 총 칼로리를 구하고, 각 low elements를 총 칼로리로 나누는 계산 -> python code 2줄로 구현
+
+code)
+import numpy as np
+
+A = np.array([[56.0, 0.0, 4.4, 68.0],
+			  [1.2, 104.0, 52.0, 8.0],
+			  [1.8, 135.0, 99.0, 0.9]])
+
+print(A)
+
+cal = A.sum(axis=0) 	# low로 더하는 방법
+print(cal)
+
+percentage = 100 * A/cal.reshape(1,4)
+
+
