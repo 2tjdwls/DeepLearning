@@ -157,6 +157,7 @@ dz(1) = a(1)-y(1) 		dz(2) = a(2)-y(2) 		... 	dz(m) = a(m)-y(m)
 dZ = [dz(1) dz(2) ... dz(m)] -> 1xm matrix(=m dimensional vector)
 A = [a(1) a(2) ... a(m)] 	Y = [y(1) y(2) ... y(m)] -> dZ = A-Y
 db = 1/m*Σ(i=1~m)dz(i)
+dw = 1/m*X*dz^T
 
 -> Non-vectorized version
 dw = 0					db = 0
@@ -167,4 +168,14 @@ dw /= m					db /= m
 
 -> Vectorized version
 db = 1/m*np.sum(dz)
+dw = 1/m*X*dz^T
 
+* Logistic Regression Vectorized version code
+np.dot(w^T,x) + b # Z = w^T*X + b
+A = σ(Z)
+dz = A-Y
+dw = 1/m*X*dz^T
+db = 1/m*np.sum(dz)
+
+w := w-αdw
+b := b-αdb
