@@ -1,14 +1,14 @@
 Week.2
+
 <Logistic Regression as a Neural Network>
+
 #1
 신경망 구현
 -m개의 학습 표본을 가진 학습 set가 있으면 m개의 학습 표본에 대해 for문을 돌리면서 전체 학습 set에 적용시키지 않는다
 -신경망으로 계산할 때 순방향경로(순전파), 역방향경로(역전파)를 이용
-
 *로지스틱 회귀 : 이진 분류를 위한 알고리즘, 지도학습 문제에서 결과값 레이블 Y의 값이 0or1인 경우 사용되는 학습 알고리즘
 ex) 고양이 이미지를 input으로 해서 1(cat) vs 0(non cat) 로 lable하고자 함
 이미지의 픽셀 채도값을 특징벡터(Feature vector)로 변환 -> 전체 픽셀값을 하나의 입력 특징벡터 x에 펼침 -> 특빙벡터 정의 : 각 픽셀값을 특징벡터의 요소(feature)로 나열 -> 이미지가 64x64라면, 특징벡터는 이미지의 RGB 모두를 포함하기 때문에 64x64x3개의 요소를 가짐 -> n_x=12288
-
 * 하나의 학습표본은 순서쌍 (x,y)로 표기 : x는 x차원을 가진 특징벡터, y는 0/1의 값을 가지는 레이블, 학습 set는 m개의 학습표본(sample)을 가짐 (m_train)
 * Test set에서는 test표본의 수를 m_test로 표현
 * 대문자 X : 행렬로 정의 [행 : 학습표본이 몇개의 요소(feature)로 되어있는가(feature수 : n_x), 열 : 학습표본(sample)이 몇개인가(sample수 : m)] -> n_x*m행렬 (X.shape = (n_x,m))
@@ -25,13 +25,11 @@ ex) X가 이미지일 때 y^은 '이 이미지가 고양이일 확률은?'
 #3
 로지스틱 회귀 모델의 매개변수 w와 b를 주어진 m개의 훈련 샘플로 학습할 때 이 훈련 세트를 바탕으로 출력한 y^(i)의 예측값이 훈련 세트에 포함된 참값 y(i)에 가까워지도록 해야함 
 위 첨자 (i) : i번째 훈련 샘플에 관한 데이터임을 뜻함
-
 - 손실함수(Loss function or Error function)
 L(y^,y) : 출력된 y의 예측값(y^)과 참값 y사이에 오차가 얼마나 큰지 측정
 만약 Error function을 1/2(y^-y)^2으로 정의한다면, 이는 매개 변수들을 학습하기 위해 풀어야할 최적화 함수가 볼록하지 않고, 여러개의 지역 최솟값을 갖기 떄문에 경사 하강법에서 전역 최솟값을 찾지 못할 수 있기 때문에 로지스틱 회귀에서는 위 Error function정의를 사용하지 않는다 -> 따라서 위와 비슷하지만, 최적화 함수가 볼록해지는 Error function 정의
 L(y^,y) = -(ylog(y^) + (1-y)log(1-y^))
 * Error function은 훈련 샘플 하나에 관하여 정의돼서 그 하나가 얼마나 잘 예측되었는지 측정
-
 - 비용함수(Cost function
 * 훈련 세트 전체에 대해 얼마나 잘 추측되었는지 측정해주는 함수
 J(w,b)=1/m*Σ(i=1~m)L(y^(i),y(i)) : 매개변수 w와 b에 대해 Error function을 각각의 훈련 샘플에 적용한 값의 합들의 평균
@@ -60,3 +58,113 @@ Gradient descent를 하는 programming을 할 땐 dw 변수로 derivative항을 
 로지스틱 회귀분석을 위한 Gradient descent를 Computation graph를 이용해서 계산하는 fomula
 
 <Python and Vectorizaiton>
+
+#1
+Vectorization : Code에서 for loop를 제거하는 기술
+딥러닝 알고리즘은 실행부분에서 큰 데이터세트에서 트레이닝 하는 것에 특화되어 있음 -> 코딩을 빠르게 진행하는 것이 매우 중요
+* for loop를 제거하면서 결과 값이 나오는 시간을 줄일 수 있음
+ex) 같은 code를 Non-Vectorized, Vectorized version으로 비교
+z = w^T*x + b, w,x : column matrix, w∈R^n_x, x∈R^n_x
+1. Non-Vectorized : 속도가 매우 느림
+z == 0
+for i in range(n_x) :
+	z += w[i]*x[i]
+z += b
+2. Vectorized : 속도가 매우 빠름
+z = np.dot(w,x)+b # w*x + b
+ex) 러닝 시간 측정
+import numpy as np
+# Vectorized version
+a = np.array([1,2,3,4])
+print(a)
+import time
+a = np.random.rand(1000000)
+b = np.random.rand(1000000)
+tic = time.time()
+c = np.dot(a,b) # c = a*b
+toc = time.time()
+print(c)
+print("Vectrized version" + str(1000*(tic-tic))+"ms")
+# Non-vectorized version
+c = 0
+tic = time.time()
+for i in range(1000000) : 
+	c += a[i]*b[i]
+toc = time.time()
+print(c)
+print("for loop :" + str(1000*(toc-tic))+"ms")
+- GPU vs CPU
+* GPU와 CPU 모두 Parallelization instruction이 있음 -> SIMD instruction이라 함(Single instruction multiple data)
+built-in function(np.function이나 for loop가 필요 없는 기능)을 이용하면 python이 parallelism을 활용할 수 있게 계산을 빨리 처리함
+* GPU는 특별히 SIMD caculate에 뛰어남, CPU가 나쁘다는건 아님
+
+#2
+* 가능한 한 일정한 for loop를 피하라, 단 항상 for loop를 피할 수 있는 것은 아님
+* 내장함수로 처리가 가능하거나 계산을 할 때 다른 방법을 찾으면 속도를 높힐 수 있음
+ex.1)
+u = A*v
+u_i = Σ(i~)A_ij*v_j
+
+-> Non-vectorized version
+u = np.zeros((n,1))
+for i in range(len(i)) :
+	for j in range(len(j)) :
+		u[i] = A[i][j]*v[j]
+
+-> Vectorized version
+u = np.dot(A,v) # for loop 제거
+
+ex.2)
+v = [ v_1 ] -> u = [ e^v_1 ]
+	[ v_2 ]		   [ e^v_2 ]
+	[ v_3 ]		   [ e^v_3 ]
+	[ ：  ]		   [   ：  ]
+	[ v_n ]		   [ e^v_n ]
+
+-> Non-vectorized version
+u = np.zeros((n,1))
+for i in range(n) :
+	u[i] = math.exp(v[i])
+
+-> Vectorized version
+import numpy as np
+
+u = np.exp(v)
+
+** numpy built-in function
+1) np.log(v) : v의 모든 요소에 log
+2) np.abs(v) : v의 모든 요소에 절댓값
+3) np.maximum(v,0) : v의 모슨 요소의 max값을 0으로
+4) v**2 : v의 모든 요소를 제곱
+5) 1/v : v의 모든 요소를 역수
+
+#3
+로지스틱 회귀에 vectorization 도입
+
+z(1) = w^T*x(1) + b		z(2) = w^T*x(2) + b 	z(3) = w^T*x(3)
+a(1) = σ(z(1))			a(2) = σ(z(2)) 			a(3) = σ(z(3))
+
+	[  :     :     :   ]
+X = [ x(1) x(2) … x(m) ] -> (n_x,m) matrix
+	[  :     :     :   ]
+
+Z = [ z(1) z(2) … z(m) ] = w^T*X + [b b … b] = w^T*x(1) + b, w^T*x(2) + b, … ,w^T*x(3) + b
+											  (= w^T*[ x(1) x(2) x(3) ] )
+z = np.dot(w^T,X) + b # 실수 b를 vector에 더할 때는 python이 자동으로 실수 b를 1xm vector로 확장시킴(1xm low vector) -> Broadcasting
+
+#4
+dz(1) = a(1)-y(1) 		dz(2) = a(2)-y(2) 		... 	dz(m) = a(m)-y(m)
+dZ = [dz(1) dz(2) ... dz(m)] -> 1xm matrix(=m dimensional vector)
+A = [a(1) a(2) ... a(m)] 	Y = [y(1) y(2) ... y(m)] -> dZ = A-Y
+db = 1/m*Σ(i=1~m)dz(i)
+
+-> Non-vectorized version
+dw = 0					db = 0
+dw += x(1)*dz(1)		db += dz(1)
+dw += x(2)*dz(2)		db += dz(2)
+	   :					:
+dw /= m					db /= m
+
+-> Vectorized version
+db = 1/m*np.sum(dz)
+
