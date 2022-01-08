@@ -150,7 +150,7 @@ X = [ x(1) x(2) … x(m) ] -> (n_x,m) matrix
 
 Z = [ z(1) z(2) … z(m) ] = w^T*X + [b b … b] = w^T*x(1) + b, w^T*x(2) + b, … ,w^T*x(3) + b
 											  (= w^T*[ x(1) x(2) x(3) ] )
-z = np.dot(w^T,X) + b # 실수 b를 vector에 더할 때는 python이 자동으로 실수 b를 1xm vector로 확장시킴(1xm low vector) -> Broadcasting
+z = np.dot(w^T,X) + b # 실수 b를 vector에 더할 때는 python이 자동으로 실수 b를 1xm vector로 확장시킴(1xm row vector) -> Broadcasting
 
 #4
 dz(1) = a(1)-y(1) 		dz(2) = a(2)-y(2) 		... 	dz(m) = a(m)-y(m)
@@ -187,8 +187,8 @@ Broadcasting
 Carb  	[ 56.0		0.0		4.4		68.0	]
 Protein [ 1.2		104.0	52.0	8.0		]	-> 3x4 data matrix
 Fat		[ 1.8		135.0	99.0	0.9		]
--> 위 3x4 data matrix에서 각 음식별 총 칼로리와, 탄수화물, 단백질, 지방이 총 칼로리에서 차지하는 퍼센트를 for loop없이 계산 (low data만 꺼내와서 계산) -> Vectorizaiton 이용
--> 위 3x4 data matrix를 matrix A로 정의 후 low끼리 더해서 총 칼로리를 구하고, 각 low elements를 총 칼로리로 나누는 계산 -> python code 2줄로 구현
+-> 위 3x4 data matrix에서 각 음식별 총 칼로리와, 탄수화물, 단백질, 지방이 총 칼로리에서 차지하는 퍼센트를 for loop없이 계산 (row data만 꺼내와서 계산) -> Vectorizaiton 이용
+-> 위 3x4 data matrix를 matrix A로 정의 후 row끼리 더해서 총 칼로리를 구하고, 각 row elements를 총 칼로리로 나누는 계산 -> python code 2줄로 구현
 
 code)
 import numpy as np
@@ -197,11 +197,69 @@ A = np.array([[56.0, 0.0, 4.4, 68.0],
 			  [1.2, 104.0, 52.0, 8.0],
 			  [1.8, 135.0, 99.0, 0.9]])
 
-print(A)
+cal = A.sum(axis=0) 	# row로 더하는 방법, axis=1이면 column으로 더하는 방법임 **
 
-cal = A.sum(axis=0) 	# low로 더하는 방법
-print(cal)
+percentage = 100 * A/cal.reshape(1,4) # numpy array여서 이미 1x4 column matrix인데 reshape해주는 이유? -> spyder로 검토해보니까 type같고 결과값도 cal로하나 reshape으로 하나 똑같음, cal은 []이고 reshape한건 [[]]임 -> 차이점 ?
+									  # 해결! : 같은 1x4 matrix이지만 reshape을 굳이 해준 이유는 matrix의 dimensional을 제대로 파악하지 못할 때 정확한 계산을 할 수 있게 실수를 줄여주는 방어막 역할 + reshape은 order one operation이어서 매우 cheap한 function, 부담이 없음
+print(percentage) 					  # A는 3x4 matrix인데 1x4 matrix로 나눔 -> How?
 
-percentage = 100 * A/cal.reshape(1,4)
+How)
+ex.1 : 4x1 matrix에 실수를 더하면 python은 자동으로 실수는 4x1 matrix form으로 확장시켜서 계산함
+	   [1]		   [1]	 [100]	 [101]
+	   [2] + 100 = [2] + [100] = [102]
+	   [3]		   [3]	 [100]	 [103]
+	   [4]		   [4]	 [100]	 [104]
+ex.2 : mxn matrix에 1xn matrix를 더하면 python은 자동으로 1xn matrix를 m번 반복시켜서 계산 수행
+	   [1 2 3] + [100 200 300] 	=  [1 2 3] + [100 200 300] = [101  202  303]
+	   [4 5 6] 					   [4 5 6]	 [100 200 300]   [104  205  306]
+ex.3 : mxn matrix에 mx1 matrix를 더하면 python은 자동으로 mx1 matrix를 n번 반복시켜서 계산 수행
+	   [1 2 3] + [100] = [1 2 3] + [100 100 100] = [101 102 103]
+	   [4 5 6]   [200]   [4 5 6]   [200 200 200]   [204 205 206]
+-> General Principle of Broadcasting
 
+#6 Rank 1 array vs Vector
+Broadcasting
+강점 : 언어의 표현성 생성, 언어의 유동성(단순히 한 줄의 코드로도 많은 기능 구현 가능)
+단점 : 유동성이 큰 만큼 Broadcasting의 구조와 특성에 대해 숙지하지 않으면 감지하지 힘든 버그나 이상하게 생긴 버그 유발 가능
 
+ex) Python numpy의 덜 직관적인 효과 예시
+import numpy as np
+
+a = np.random.randn(5) # randint : 균일 분포의 정수 난수 1개 생성, rand : 0~1사이에서 난수 matrix array생성, randn : Gaussian standard normal distribution에서 난수 matrix array생성
+print(a.shape) # (5,) : a는 Rank 1 array (데이터 구조) -> row vector도 아니고 column vector도 아님
+print(a.T) # a의 Transpose는 a와 같은 값을 가짐 (전치가 안됨) -> Rank 1 array이기 때문
+print(np.dot(a,a.T)) # Broadcasting에 의해 바깥쪽 product들이 matrix를 확장하지 않고 결과값이 단 하나의 값으로 나옴
+-> 신경망을 구현하는 경우에는 데이터구조(n, / Rank 1 array 등)를 사용하는 것이 아니라, vector로 지정해줌
+
+a = np.random.randn(5,1) # Rank 1 array가 아닌 5,1을 지정해줌으로써 직관적으로 생성함
+print(a) # 5x1 column vector로 출력
+print(a.T) # a의 Transpose는 1x5 row vector로 출력 잘 됨
+-> 이 때 vector형태는 [[]]꼴이고 Rank 1 array는 []꼴임 (위에 칼로리 예시코드에서 .sum()은 Rank 1 array출력, reshape은 vector로 출력했었다는 걸 깨달음***)
+print(np.dot(a,a.T)) # 둘 다 vector니깐 Broadcasting에 의해 바깥쪽 product가 확장되어 연산
+
+* assert(a.shape == (5,1)) # Vector의 dimension이 정확히 무엇인지 모를 때 Vector의 form을 정함 -> assert는 실행을 목적으로 하고 코드를 기록함
+
+* 위에서 깨달았듯이 Rank 1 array를 의도치않게 만들었을 때 reshape을 이용해서 원하는 form의 vector로 바꿔줄 수 있음
+
+#7
+Logistic Regression
+z = w^T*x + b
+y = σ(z)
+y^ = P(y=1|x)
+
+if y = 1 : P(y|x) = y^
+if y = 0 : P(y|x) = 1-y^
+->  P(y|x) = (y^)^y*(1-y^)^(1-y) # P(y|x)의 올바른 정의
+	(if y = 1 : P(y|x) = y^)
+	(if y = 0 : P(y|x) = 1-y^)
+
+위의 P(y|x)은 단순 증가 함수이기 때문에 maximizing을 통해 P(y|x)를 optimization함
+-> log(P(y|x)) = y*log(y^)+(1-y)*log(1-y^) = -L(y^,y) : loss function의 (-)부호 붙힌 값
+-> (-)부호 있는 이유 : 러닝 알고리즘을 트레이닝 시킬 때는 확률을 높이고 싶지만, Logistic Regression에서는 loss function을 minimizing해야 하기 때문 = log(P(y|x))를 maximizing해야 하기 때문
+
+- Cost on m examples
+P(lables in trainning set) = Π(i=1~m)P(y(i)|x(i)) # 따로 그린 트레이닝 세트는 IID로 그림(identically independently distribution : 독립 동일 분포)
+-> log(P(~)) = Σ(i=1~m)log(P(y(i)|x(i))) = -L(y^(i),y(i))
+-> 최대확률측정법(principle of maximum likelihood estimation)이라는 통계 원리 : 요약하자면 이 값을 최대화 시킬 수 있는 매개변수를 고르는 것 = 이 값을 최대화 시키는 것
+-> = -Σ(i=1~m)L(y^(i),y(i))
+-> Cost function(minimize) : J(w,b) = 1/m*Σ(i=1~m)L(y^(i),y(i)
