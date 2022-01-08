@@ -217,7 +217,8 @@ ex.3 : mxn matrix에 mx1 matrix를 더하면 python은 자동으로 mx1 matrix�
 	   [4 5 6]   [200]   [4 5 6]   [200 200 200]   [204 205 206]
 -> General Principle of Broadcasting
 
-#6 Rank 1 array vs Vector
+#6
+Rank 1 array vs Vector
 Broadcasting
 강점 : 언어의 표현성 생성, 언어의 유동성(단순히 한 줄의 코드로도 많은 기능 구현 가능)
 단점 : 유동성이 큰 만큼 Broadcasting의 구조와 특성에 대해 숙지하지 않으면 감지하지 힘든 버그나 이상하게 생긴 버그 유발 가능
