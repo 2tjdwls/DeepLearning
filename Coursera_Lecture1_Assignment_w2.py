@@ -143,9 +143,9 @@ def optimize(w, b, X, Y, num_iterations=100, learning_rate=0.009, print_cost=Fal
     costs = []
     
     for i in range(num_iterations):
-..
+
         # YOUR CODE STARTS HERE
-        grads, cost = dict(dw[i]), list()
+        grads, cost = propagate(w, b, X, Y)
         
         # YOUR CODE ENDS HERE
         
