@@ -146,7 +146,6 @@ def optimize(w, b, X, Y, num_iterations=100, learning_rate=0.009, print_cost=Fal
 
         # YOUR CODE STARTS HERE
         grads, cost = propagate(w, b, X, Y)
-        
         # YOUR CODE ENDS HERE
         
         # Retrieve derivatives from grads
@@ -154,8 +153,8 @@ def optimize(w, b, X, Y, num_iterations=100, learning_rate=0.009, print_cost=Fal
         db = grads["db"]
         
         # YOUR CODE STARTS HERE
-        w = 
-        
+        w = w - learning_rate*dw
+        b = b - learning_rate*db        
         # YOUR CODE ENDS HERE
         
         # Record the costs
@@ -193,15 +192,16 @@ def predict(w, b, X):
     w = w.reshape(X.shape[0], 1)
     
     # YOUR CODE STARTS HERE
-    
-    
+    A = sigmoid(np.dot(w.T,X) + b)
     # YOUR CODE ENDS HERE
     
     for i in range(A.shape[1]):
         
         # YOUR CODE STARTS HERE
-        
-        
+        if A[0,i] > 0.5 :
+            Y_prediction[0,i] = 1
+        else :
+            Y_prediction[0,i] = 0        
         # YOUR CODE ENDS HERE
     
     return Y_prediction
@@ -218,8 +218,12 @@ predict_test(predict)
 def model(X_train, Y_train, X_test, Y_test, num_iterations=2000, learning_rate=0.5, print_cost=False):
     
     # YOUR CODE STARTS HERE
-    
-    
+    w, b = initialize_with_zeros(X_train.shape[0])
+    params, grads, costs = optimize(w, b, X_train, Y_train, num_iterations, learning_rate, print_cost)
+    w = params.get("w")
+    b = params.get("b")
+    Y_prediction_test = predict(w, b, X_test)
+    Y_prediction_train = predict(w, b, X_train)  
     # YOUR CODE ENDS HERE
 
     # Print train/test Errors
