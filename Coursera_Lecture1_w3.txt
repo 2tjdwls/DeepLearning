@@ -1,0 +1,47 @@
+Week3
+
+<Neural Networks Overview>
+
+Logistic Regression에서 x, w, b를 이용해서 z를 구하고 z를 이용해서 a = σ(z)를 구하고 이를 통해 Loss function을 구함 -> 여기서 node는 z를 구하는 node와 a를 구하는 node 2개로 구성
+신경망은 여러개의 sigmoid function을 쌓아서 만들 수 있음
+각 층(layer)을 위첨자 [i]로 구분해서 사용 -> layer[1] : z^[1] = w^[1]*x + b^[1], layer[2] : z^[2] = w^[2]*x + b^[2]
+
+* 신경망에서는 z와 a를 여러번 계산하고 마지막으로 최종 y^과 Loss function을 계산함
+
+x1, x2, x3 ... 이 쌓여 있는 건 Input layer(입력 층)이라고 함
+hidden layer(은닉 층) : train set은 입력 값 x와 출력 값 y로 구성되어 있음, 은닉 층은 train set에 없음(train set에서 무슨 값인지 모름) -> 은닉 층 : train set에서 볼 수 없는 층
+마지막으로 하나의 node를 Output layer(출력 층)이라고 함 : 예측 값인 y^을 계산함
+
+Input layer : a^[0] = x -> a^[0]_1 = x_1, a^[0]_2 = x_2, a^[0]_3 = x_3, a^[0]_4 = x_4
+2nd layer : a^[1]_1, a^[1]_2, a^[1]_3, a^[1]_4
+Output layer : a^[2]
+-> 2 layer NN (관례적으로 Input layer는 count하지 않음, hidden layer가 layer1, output layer가 layer2임)
+
+a^[l]_i -> [l] : layer, i : node in layer
+a^(i) -> example i (sample i)
+
+-> m개의 Input_sample에 대한 계산 -> Vectorizing 이용 (각 sample은 n_x개의 feature를 가지고 있음)
+
+ * Vectorizing
+     [  :     :         :  ]
+ X = [x^(1) x^(2) ... x^(m)] -> (n_x X m) matrix : node수 (sample의 feature수) X 훈련 샘플 수, (X : train set, x : train sample)
+     [  :     :         :  ]
+
+        [   :        :             :   ] -> (1,1) = 첫 hidden unit의 첫 훈련 샘플의 z값
+Z^[1] = [z^[1](1) z^[1](2) ... z^[1](m)] -> (number of node X m) matrix : node수 X 훈련 샘플 수
+        [   :        :             :   ]
+
+        [   :        :             :   ] -> (1,1) = 첫 hidden unit의 첫 훈련 샘플의 activation값
+A^[1] = [a^[1](2) a^[1](2) ... a^[1](m)] -> (number of node X m) matrix : node수 X 훈련 샘플 수
+        [   :        :             :   ]
+
+Input을 Column으로 stacking하면 Output도 Column으로 stacking되서 나온다
+
+* Activation function
+1. sigmoid function : a = σ(z) = 1/(1+e^-z) : 이진 분류 문제의 출력층에서 (y∈{0,1}일 때 0≤y^≤1으로 할 때) 사용
+2. hyperbolic tangent function : a = tanh(z) = (e^z-e^-z)/(e^z+e^-z) : 값이 -1 ~ +1 사이에 있기 때문에 평균값이 0에 더 가까워진다, 학습 알고리즘을 훈련할 때 평균값의 중심을 0으로 할 때도 좋음
+                                                                       데이터의 중심을 0으로 할 수 있음, 다음 층의 학습을 더 쉽게 해줌 
+                                                                       * 시그모이드와 tanh는 z가 매우 작거나 크면 기울기가 0에 수렴해서 gradient descent가 느려질 수 있음
+3. ReLU function : a = max(0,z) : z가 음수이면 도함수=0, 양수이면 도함수=1
+                                  * 은닉층에 어떤 activation function을 써야할 지 모르겠으면 ReLU를 써라 -> 가장 많이 사용하고 잘 작동함
+4. Leaky ReLU function : a = max(0.01z,z)
