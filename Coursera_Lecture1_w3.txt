@@ -44,4 +44,82 @@ Input을 Column으로 stacking하면 Output도 Column으로 stacking되서 나�
                                                                        * 시그모이드와 tanh는 z가 매우 작거나 크면 기울기가 0에 수렴해서 gradient descent가 느려질 수 있음
 3. ReLU function : a = max(0,z) : z가 음수이면 도함수=0, 양수이면 도함수=1
                                   * 은닉층에 어떤 activation function을 써야할 지 모르겠으면 ReLU를 써라 -> 가장 많이 사용하고 잘 작동함
-4. Leaky ReLU function : a = max(0.01z,z)
+4. Leaky ReLU function : a = max(0.01z,z) : z가 음수이면 약간의 도함수를 가지고, 양수이면 도함수=1 -> z가 음수일 때 도함수는 학습 알고리즘의 변수로 지정 가능(0.01은 예시)
+
+* 비선형 활성화 함수가 필요한 이유?
+ex)
+Given x :
+z^[1] = W^[1]*x + b^[1]
+a^[1] = z^[1] -> Linear activation Function or Identity activation Function
+z^[2] = W^[2]*x + b^[2]
+a^[2] = z^[2]
+
+-> a^[1] = z^[1] = W^[1]*x + b^[1]
+-> a^[2] = z^[2] = W^[2]*a^[1] + b^[2]
+-> a^[2] = W^[2]*(W^[1]*x + b^[1]) + b^[2]
+-> a^[2] = W^[2]*W^[1]*x + W^[2]*b^[1] + b^[2]  (W^[2]*W^[1] = W', W^[2]*b^[1] + b^[2] = b')
+-> a^[2] = W'*x + b' 
+
+* 선형 활성화 함수를 사용하면 신경망은 입력의 선형식만을 출력한다 -> 층이 얼마나 많든간에 출력은 은닉층이 얻는 것과 같다
+* 선형 은닉층은 쓸모가 없다 -> 단, 회귀문제에 대한 머신러닝 기법에서는 사용 (출력값인 y^이 실수일 때 ex)집 값 예측 모델)
+
+- Activation function의 도함수
+1. sigmoid function : g(z) = σ(z), g'(z) = g(z)*(1-g(z))
+2. hyperbolic tangent function : g(z) = tanh(z), g'(z) = 1-(tanh(z))^2
+3. ReLU and Leaky ReLU : g(z) = max(0,z), g'(z) = 0 (if z<0), 1 (if z>0), undefined or 0 or 1 (if z=0)
+                         g(z) = max(0.01z,z), g'(z) = 0.01 (if z<0), 1 (if z>0), undefined or 0.01 or 1 (if z=0)
+
+- Parameter
+w^[1] : (n^[1], n^[0])
+b^[1] : (n^[1], 1)
+w^[2] : (n^[2], n^[1])
+b^[2] : (n^[2], 1)
+
+- Cost Function : J(w^[1], b^[1], w^[2], b^[2]) = 1/m*Σ(i=1~m)L(y^,y)
+
+- Gradient descent
+Repeat {
+    Compute predict (y^(i), i=1~m)
+    dw^[1] = dJ/dw^[1], db^[1] = dJ/db^[1]...
+    w^[1] = w^[1] - αdw^[1]
+    b^[1] = b^[1] - αdb^[1]
+    ...
+}
+
+- Forward propagation
+z^[1] = w^[1]*X + b^[1]
+A^[1] = g^[1](z^[1])
+z^[2] = w^[2]*A^[1] + b^[2]
+A^[2] = g^[2](z^[2]) = σ(z^[2])
+
+- Back propagation
+dz^[2] = A^[2] - y
+dw^[2] = (1/m)*dz^[2]*A^[1].T
+db^[2] = (1/m)*np.sum(dz^[2], axis=1, keepdims=True) # axis=1 : row끼리 연산, keepdims=True : Rank 1 array 방지
+dz^[1] = w^[2].T*dz^[2] * g^[1]'*(z^[1]) # element-wise product -> w^[2].T*dz^[2] = (n^[1], m) ,g^[1]'(z^[1]) = (n^[1], m)
+dw^[1] = (1/m)*dz^[1]*X.T = (1/m)*dz^[1]*A^[0].T
+db^[1] = (1/m)*np.sum(dz^[1], axis=1, keepdims=True)
+
+- Dimension
+w^[2] = (n^[2], n^[1])
+z^[2], dz^[2] = (n^[2], 1)
+z^[1], dz^[1] = (n^[1], 1)
+-> dz^[1] = w^[2].T*dz^[2] * g^[1]'*(z^[1]) -> (n^[1], n^[2])*(n^[2], 1) * (n^[1], 1) = (n^[1], 1)*(n^[1], 1) = (n^[1], 1)
+
+- Initialization
+신경망에서 w^[1], w^[2]를 zero Initialization하는 것은 symmetric을 발생시킴
+-> a^[1]_1 = a^[1]_2, dz^[1]_1 = dz^[1]_2
+* 수학적 귀납법을 이용하면 각 training의 반복마다 두 은닉 유닛이 항상 같은 함수를 계산함
+* epoch를 몇 번 하든지, 은닉층이 몇개이든지 상관 없이 zero Initialization은 symmetric problem을 유발시키므로 실제로는 은닉층이 하나 있는 것과 같음
+
+- Random Initialization
+w^[1] = np.random.randn((2,2)) * 0.01 # Gaussian random variable을 2x2 matrix로 생성하고 0.01곱해서 매우 작은 값으로 Random하게 Initialization
+b^[1] = np.zero((2,1)) # b는 zero Initialization해도 symmetric을 발생시키지 않음 -> symmetric braking problem
+w^[2] = ...
+b^[2] = ...
+
+* 가중치의 초기값에 0.01을 곱하는 이유
+가중치의 초기값은 매우 작은 값으로 하는 것이 좋다 -> w가 커지면 z가 매우 커지거나 매우 작아지므로 activation function에서 gradient의 문제가 생길 수 있음
+                                                 ex) sigmoid or tanh에서 gradient = 0 -> gradient descent 속도 ↓ -> learning spped ↓
+                                                 
+
