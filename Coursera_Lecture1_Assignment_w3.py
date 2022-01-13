@@ -127,17 +127,6 @@ forward_propagation_test(forward_propagation)
 # GRADED FUNCTION: compute_cost
 
 def compute_cost(A2, Y):
-    """
-    Computes the cross-entropy cost given in equation (13)
-    
-    Arguments:
-    A2 -- The sigmoid output of the second activation, of shape (1, number of examples)
-    Y -- "true" labels vector of shape (1, number of examples)
-
-    Returns:
-    cost -- cross-entropy cost given equation (13)
-    
-    """
     
     m = Y.shape[1] # number of examples
 
