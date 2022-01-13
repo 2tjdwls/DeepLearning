@@ -121,5 +121,3 @@ b^[2] = ...
 * 가중치의 초기값에 0.01을 곱하는 이유
 가중치의 초기값은 매우 작은 값으로 하는 것이 좋다 -> w가 커지면 z가 매우 커지거나 매우 작아지므로 activation function에서 gradient의 문제가 생길 수 있음
                                                  ex) sigmoid or tanh에서 gradient = 0 -> gradient descent 속도 ↓ -> learning spped ↓
-                                                 
-
