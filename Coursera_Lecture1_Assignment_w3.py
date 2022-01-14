@@ -10,7 +10,6 @@ import sklearn.linear_model
 from planar_utils import plot_decision_boundary, sigmoid, load_planar_dataset, load_extra_datasets
 
 %matplotlib inline
-
 %load_ext autoreload
 %autoreload 2
 
