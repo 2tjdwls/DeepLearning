@@ -1,3 +1,5 @@
+# Logistic Regression with a Neural Network Mindset
+
 import numpy as np
 import copy
 import matplotlib.pyplot as plt

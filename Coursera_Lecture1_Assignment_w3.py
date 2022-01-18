@@ -1,4 +1,4 @@
-# Coursera_Lecture1_Assignment_w3
+# Planar Data Classification with One Hidden Layer
 
 # Package imports
 import numpy as np
