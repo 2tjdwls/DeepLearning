@@ -1,5 +1,6 @@
 # Logistic Regression with a Neural Network Mindset
 
+# Package imports
 import numpy as np
 import copy
 import matplotlib.pyplot as plt
@@ -277,4 +278,3 @@ legend = plt.legend(loc='upper center', shadow=True)
 frame = legend.get_frame()
 frame.set_facecolor('0.90')
 plt.show()
-

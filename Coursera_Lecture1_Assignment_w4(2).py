@@ -1,5 +1,6 @@
 # Deep Neural Network for Image Classification: Application
 
+# Package imports
 import time
 import numpy as np
 import h5py

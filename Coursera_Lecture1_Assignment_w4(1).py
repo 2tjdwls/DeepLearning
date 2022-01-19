@@ -1,5 +1,6 @@
 # Building your Deep Neural Network : Step by Step
 
+# Package imports
 import numpy as np
 import h5py
 import matplotlib.pyplot as plt
