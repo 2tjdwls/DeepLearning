@@ -42,7 +42,7 @@ db^[l] = dz^[l]
 da^[l-1] = w^[l][T]dz[l]
 -> dz^[l] = w^[l+1][T]dz^[l+1]*gz^[l]'(z^[l])
 
-→ Vectorization
+-> Vectorization
 dz^[l] = dA^[l]*g^[l]'(z^[l])
 dw^[l] = (1/m)dz^[l]A^[l-1].T
 db^[l] = (1/m)np.sum(dz^[l],axis=1,keepdims=True)
