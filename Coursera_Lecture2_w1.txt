@@ -1,0 +1,113 @@
+Week1
+
+<Setting ML application>
+
+#layer, #hidden units, learning rates, activation functions... -> 처음에 application을 짤 때 이 모든 것을 정확하게 결정하는 것은 거의 불가능하다
+ML application은 반복의 과정임
+ML application은 많은 분야에 응용되어 적용 중 : NLP / Vision / Speech / Structured Data (Ads, Search, Security...) -> 특정 분야에 적용되는 직관이 다른 분야에서 적용되지 않는 경우가 많음
+
+알고리즘 개발에 Train, Development, Test set을 잘 설정하는 것이 중요
+
+- Big Data era : □□□□□□□□□□□□□|□□□□□□□□□□□□□□□□□□|□□□□□□□□□□ (Data > 1000000 scale)
+                 train set     Hold-out           test set
+                               Cross validation
+                               Development set
+                               'dev'
+                                  
+- Previous era : Data 70%  /  30%  or  60%  / 20% / 20%  -> ML 이전 시대에서 관행적으로 전체 Data를 쪼개서 사용 (Data 100~10000 scale)
+                      train   test     train  dev   test
+
+- Dev set과 test set은 서로 다른 알고리즘을 비교하고 어느 알고리즘이 더 잘 작동하는지 확인하는 것이 목표이기 때문에 평가할 수 있을 정도의 scale이면 충분함
+- 또한 test set은 최종 모델이 어느 정도 성능인지 신뢰있는 추정치를 제공하는 것이 목표이기 때문에 20 ~ 30% 만큼의 scale은 필요 없음 (Data scale 100000 -> Dev set, test set : 10000 정도면 됨)
+
+*** Data set이 상대적으로 적은 scale이면 전통적인 방법으로 설정해도 됨, 충분히 많은 Data set을 보유하고 있다면, Dev set과 test set은 적당하게 작은 scale로 설정해도 된다
+
+*** Mismatched train/test distribution : train set은 웹사이트에서 가져온 고해상도의 깔끔한 Image, Dev/test set은 User가 업로드하는 저해상도의 흐릿한 Image -> Data의 distribution이 mismatch가 됨
+    따라서, dev/test set과 train set의 distribution을 같게 하는 것이 좋음
+
+*** Test set이 없어도 됨 (Onle dev set) -> Test set은 최종 네트워크의 성능에 대한 비편향 추정을 제공하는 것이므로, 비편향 추정이 필요없는 경우라면 test set은 없어도 됨
+
+<Bias/Variance>
+
+high bias : underfitting
+just right
+high variance : Overfitting
+
+                    Overfitting     Underfitting
+Train set error :       1%             15%                   15%                            0.5%
+Dev set error :         11%            16%                   30%                            1%
+                   high variance    high bias       high bias + high variance       low bias + low variance
+                                        ↓
+* Human error ≒ 0%          dev set에 비교적 괜찮게 일반화되고 있는 반면,
+= Optimal error              dev set의 성능은 train set 대비 1%를 못함
+= Base error                 -> High bias의 문제가 생김
+
+Q) High bias? (training data performance) -> Yes -> Bigger network / Train longer / (NN architecture search)
+Q) High variance? (dev set performance) -> Yes -> More data / Regularization / (NN architecture search)
+-> Done.
+
+Previous era : "bias variance tradeoff" : 시도할 수 있는 방법 중에 bias를 늘리면서 variance를 줄이거나, bias를 줄이면서 variance를 늘릴 수 있음 -> 이제는 독립적으로 각각을 줄일 수 있음
+
+<Regularization>
+
+Data Overfitting = High variance -> try Regularization (More data는 cost가 증가하거나 data를 더 많이 수집하는게 불가능할 수도 있음)
+
+- Logistic Regression을 이용하여 Regularization의 Idea 발전
+
+minJ(w,b), w∈R^nx, b∈R
+J(w,b) = 1/m∑(i=1~m)L(y^(i),y^(i)) + λ/2m||w||^2_2
+
+*** L2 Regularization : ||w||^2 = ∑(j=1~nx)wj^2 = w.T*w -> 가장 일반적인 유형의 Regularization
+
+*** L1 Regularization : λ/2m∑(j=1~nx)|w| = λ/2m||w||_1 -> w will be sparse -> w vector에 수많은 0이 생김
+-> 일각에서는 이것이 모델을 압축하는데 도움이 된다고 함 : parameter set이 0이고 모델을 저장할 memory가 작아지기 때문 -> 실제로는 w가 sparse가 되는 것뿐, 많은 도움이 되진 않는다
+
+*** b를 Regularization하지 않는 이유 : high variance인 경우 w는 High dimensional parameter vector이므로 많은 parameter들이 포함되어 있는 반면 b는 single number이기 때문
+                                      b를 Regularization할 수 있지만 큰 변동은 없을 거라 예상되기 때문에 b는 생략함 (하고싶으면 해도 됨)
+
+λ : Regularization paremeter -> dev set이나 cross validation을 사용하여 설정 (python에서는 예약어로 설정되어 있음 lambd)
+
+- Neural Network
+J(w[1],b[1], ... w[L],b[L]) = 1/m∑(i=1~n)L(y^(i),y(i)) + λ/2m∑(l=1~L)||w^[l]||^2
+||w^[l]||^2 = ∑(i=1~n[l])∑(j=1~n[l-1])(wij^[l])^2  w : n^[l] X n^[l-1] matrix -> "Frobenius norm" (matrix element들의 제곱의 합을 뜻함)
+
+dw^[l] = (from backprop) + λ/m*w^[l]
+w^[l] := w^[l] - αdw^[l]  ->  L2 Regularization = Weight decay : (1-αλ/m < 1)이 w[l]에 곱해지기 떄문
+
+- 직관적인 설명 (완벽히 옳은 설명은 아님)
+λ를 크게 설정하면 W(weight matrix)를 0에 가까운 값으로 지정하게 한다 -> Hidden unit에서 w를 0에 가깝게 지정해서 Hidden unit의 영향을 거의 0으로 만든다
+-> 훨씬 더 작은 신경망이 됨 -> Overfitting한 경우에서 high bias(underfitting)쪽으로 이동 -> λ를 이상적으로 적당한 값으로 설정하면 just right과 같게 만들 수 있음
+* 심플한 네트워크로 된다는 것은 overfitting의 영향을 덜 받게 된다는 뜻
+
+* activation function이 g(z) = tanh(z)인 경우 λ를 증가시키면 w[l]이 감소하기 때문에 z[l] = w[l]a[l-1] + b[l] 에서 z[l]도 상대적으로 범위가 감소함
+  z[l]의 범위가 감소하면 tanh에서 원점 근처의 선형적인 부분에만 해당하므로 모든 layer가 선형으로 되고, 이는 선형회귀와 같게 된다 = Underfitting쪽으로 이동
+
+<Dropout Regularization>
+
+각각의 layer를 살펴보면서 NN의 node를 제거하는 확률을 세팅한다 -> 확률에 따라 node와 링크 제거 -> 훨씬 더 작은 감소된 네트워크가 남음 -> Back Propagation 진행
+
+- Inverted Dropout (trainning time)
+layer l=3, keep-prob = 0.8
+d3 = np.random.rand(a3.shape[0],a3.shape[1]) < keep-prob : hidden layer를 제거할 확률 = 0.2
+a3 = np.multiply(a3,d3)
+a3 /= keep-prob -> 50 units in layer -> 10 units = 0 -> z[4] = w[4]a[3] + b[4] (20%의 a[3]가 0이 될 것) -> z[4]의 기댓값을 감소시키지 않기 위해 a3/0.8을 한다 (inverted dropout technique)
+
+* inverted dropout technique : keep-prob를 어떻게 설정하더라도 activation의 기댓값이 동일하게 유지되도록 함
+
+- test time에선 No drop out -> test time에서 결과값이 임의의 숫자가 되면 좋지 않기 때문, test time에 drop out을 도입하면 예측수치에 noise를 더할 뿐이다
+a[0] = X
+z[1] = w[1]a[0] + b[1]
+a[1] = g(z[1])
+z[2] = w[2]a[1] + b[2]
+a[2] = g(z[2])
+... y^
+
+<Other Regularization Technique>
+
+1. Data augmentation
+ex. cat image classifier에서 train set의 cat image를 가로로 뒤집거나 임의로 크롤링(회전, 줌인 등)해서 Data set을 확장할 수 있음 (임의의 추가 train sample을 만드는 것)
+    -> 완전히 새로운 cat image를 추가하는 것보다는 효과가 떨어지지만 cost가 들지 않고 간단하게 Data set을 확장할 수 있음 -> overfitting 제거
+
+2. Early stopping
+training error or J의 gradient descent를 그리고 dev set error를 그린다 -> 어느 순간까지 알고리즘이 잘 작동했다면 그 순간까지만 학습하게 한다 -> w는 긴 시간 학습하기 전에는 0에 가깝다
+-> 학습을 반복하면 할수록 w는 점점 커진다 -> w가 mid-size가 되는 시점에서 학습을 중지시킨다 -> 신경망에서 w parameter수가 비슷한 norm을 선정하여 결과적으로 덜 overfitting하게 만들어주는 것
