@@ -29,7 +29,7 @@ ML application은 많은 분야에 응용되어 적용 중 : NLP / Vision / Spee
 
 <Bias/Variance>
 
-high bias : underfitting
+high bias : Underfitting
 just right
 high variance : Overfitting
 
@@ -111,3 +111,91 @@ ex. cat image classifier에서 train set의 cat image를 가로로 뒤집거나 
 2. Early stopping
 training error or J의 gradient descent를 그리고 dev set error를 그린다 -> 어느 순간까지 알고리즘이 잘 작동했다면 그 순간까지만 학습하게 한다 -> w는 긴 시간 학습하기 전에는 0에 가깝다
 -> 학습을 반복하면 할수록 w는 점점 커진다 -> w가 mid-size가 되는 시점에서 학습을 중지시킨다 -> 신경망에서 w parameter수가 비슷한 norm을 선정하여 결과적으로 덜 overfitting하게 만들어주는 것
+
+<Setting up optimization problem>
+
+- Normalization in 2step
+
+Input feature : x = [x1;x2]
+
+1. Subtract mean
+μ = 1/m∑(i=1~m)x^(i)
+x := x - μ
+μ = 0 이 될 때까지 train sample 이동
+
+2. Normalizing variance
+σ^2 = 1/m∑(i=1~m)x^(i)**2 # ** : 요소별 제곱
+x /= σ^2
+
+** use same μ, σ^2 to nomalize test set
+
+- Why normalize input?
+신경망의 학습속도를 높일 수 있음
+Input feature가 각기 다른 크기를 가질 때 분산이 제각각이어서 학습속도가 느려진다
+Unnormalizeed 일 때는 cost function이 매우 가늘고 긴 활 모양을 가진다 (3차원 공간좌표에서, w축, b축, J축)
+이 때 cost function의 등고선을 그리면 비대칭적인 모양이 나옴 (w축, b축)
+여기에 gradient descent를 적용하면 learning rate을 사용하게 됨 (왔다갔다를 심하게 한다)
+Normalized 일 때는 cost function이 대칭적인 모양이 나옴
+따라서 gradient descent를 적용하면 어디서 시작하든 왔다갔다 하지 않고 곧바로 최솟값으로 향하게 된다
+
+- Vanishing / Exploding gradient
+
+Input feature : x = [x1;x2]
+w^[1], w^[2], w^[3] ... w^[L]
+b^[l] = 0
+g(z) = z
+-> y^ = w^[L]*w^[L-1]*...*w^[2]*w^[1]*x
+
+** Exploding
+w[1] ~ w[L-1] = [1.5 0 ; 0 1.5]
+y^ = w^[L]*[1.5 0 ; 0 1.5]^L-1*x = w^[L]*1.5^L-1*X
+-> L이 매우 커지면 y^은 1.5^L-1 만큼 기하급수적으로 커지게 된다 -> y^은 폭발한다
+
+** Vanishing
+w[1] ~ w[L-1] = [0.5 0 ; 0 0.5]
+y^ = w^[L]*[0.5 0 ; 0 0.5]^L-1*x = w^[L]*0.5^L-1*x
+-> L이 매우 커지면 y^은 0.5^L-1만큼 기하급수적으로 작아지게 된다 -> y^은 소멸된다
+
+** Solution
+신경망에 대한 무작위 초기화를 더 신중하게 선택하는 것
+
+Input feature : x = [x1;x2;x3;x4]
+a = g(z)
+z = w_1*x_1 + w_2*x_2 + ... + w_n*x_n
+larger n -> smaller w_i
+-> Var(w_i) = 1/n (n : Input feature의 개수)
+w^[l] = np.random.randn(shape(,))*np.sqrt(1/n^[l-1])
+Activation function에 ReLU를 사용하면 Var(w_i)를 2/n으로 설정하는 것이 더 낫다
+-> w를 1보다 너무 크거나 작아지지않게 설정해서 Vanishing이나 Exploding이 너무 빠르게 일어나지 않게 한다
+
+Activation function에 tanh를 사용하는 경우 Var(w_i) = 1/n^[l-1] 으로 한다
+np.sqrt(1/n^[l-1]) -> Xavier Initialization
+
+다른 Activation function을 사용할 때 np.sqrt(2/(n^[l-1]*n^[l]))
+
+- Gradient Checking
+Gradient의 계산을 수치적으로 근사하는 방법
+
+Gradinet checking을 할 때 (f(θ+ε)-f(θ-ε))/2ε 을 Gradient의 근사치로 사용한다
+(f(θ+ε)-f(θ))/ε을 사용하는 것 보다 더 정확한 근사치를 제공한다
+
+Gradient Checking은 시간을 절약하고 Backpropagation의 구현에 대한 버그를 찾는데 많은 도움이 된다
+
+Take w^[1], b^[1],...,w^[L], b^[L] and reshape into a big vector θ
+-> J(w^[1],b^[1],...,w^[L],b^[L]) = J(θ)
+Take dw^[1], db^[1],...,dw^[L], db^[L] and reshape into a big vector dθ
+
+J(θ) = J(θ1,θ2,θ3...)
+
+for each i :
+    dθapprox^[i] = (J(θ1, θ2,...,θi+ε,...) - J(θ1,θ2,...,θi-ε,...))/2ε ≒ dθ[i] = ∂J/∂θ_i
+-> dθapprox =?= dθ
+** Check : (||dθapprox - dθ||_2)/||dθapprox||_2+||dθ||_2 ≒ 10^-7 : great! (ε=10^-7 일 때)
+                                                         ≒ 10^-5 : Soso
+                                                         ≒ 10^-3 : Worry...
+
+** Don't use grad check in training - only to debug : 모든 i에 대한 dθapprox^[i]를 일일히 계산하면 속도가 느려지기 때문
+** If algorithm fails grad check, look at components to try to identify bug
+** Remember regulariation
+** Doesn't work with dropout
+** Run at random initialization; perhaps again after some training
