@@ -1,0 +1,241 @@
+Week2
+
+<Mini-batch gradient descent>
+
+#1
+Vectorization allows you to efficiently compute on m examples -> 명시적인 반복문 없이도 train set을 진행할 수 있도록 함
+
+X = [ x^(1) x^(2) x^(3) ... x^(m) ] : (n_x, m)
+Y = [ y^(1) y^(2) y^(3) ... y^(m) ] : (1, m)
+
+하지만 만약에 m이 매우 크다면 Vectorization을 해도 여전히 느릴 수 있음
+전체 train set에 대한 gradient descent를 구현하면 gradient descent의 단계 마다 모든 train set을 처리해야 함
+-> 따라서 전체 train set을 모두 처리하기 전에 gradient descent가 진행되도록 하면 더 빠른 알고리즘을 얻을 수 있음
+
+ex)
+m = 5,000,000
+5000 mini-batches of 1000 each -> mini-batch는 전체 train set을 나눠서 얻은 각 요소를 뜻함
+X = [ x^(1) ~ x^(1000) | x^(1001) ~ x^(2000) | ... | ... x^(m) ]
+↓
+X^{1} = x^(1) ~ x^(1000)
+x^{2} = X^(1001) ~ x^(2000) ...
+
+Y = [ y^(1) ~ y^(1000) | y^(1001) ~ y^(2000) | ... | ... y^(m) ]
+↓
+Y^{1} = y^(1) ~ y^(1000)
+y^{2} = y^(1001) ~ y^(2000) ...
+
+Mini-batch t : X^{t}, Y^{t}
+
+- Batch gradient descent : 모든 train set을 동시에 진행시키는 방법 -> 동시에 train sample의 모든 batch를 진행시킨다는 관점
+- Mini-batch gradient descent : 전체 train set X,Y를 한 번에 진행시키지 않고 하나의 mini-batch X^{t}, Y^{t}를 동시에 진행시키는 알고리즘
+
+for t = 1 ~ 5000 -> 크기가 1000인 mini-batch가 5000개 있기 때문 -> 반복문 안에서는 X^{t}와 Y^{t}를 사용해서 한 단계의 gradient descent를 구현하는 것
+1. Forward propagation on X^{t}
+Z^[1] = W^[1]X^{t} + b^[1]
+A^[1] = g^[1](Z^[1])
+...
+A^[L] = g^[L](Z^[L])
+-> Vectorized (1000 examples)
+
+2. Compute cost function J^{t} = 1/1000∑(i=1~l)L(y^(i), y(i)) + λ/2*1000∑(l)||w^[l]||^2_F
+
+3. Backward propagation to compute gradients cost J^{t} (using X^{t}, Y^{t})
+W^[l] := W^[l] - αdW^[l], b^[l] := b^[l] - αdb^[l]
+-> 1 epoch (pass through train set)
+
+** Batch gradient descent에서 train set을 거치는 한 반복은 오직 하나의 gradient descent를 하게 함
+** Mini-batch gradient descent에서 train set을 거치는 한 반복은 5000개의 gradient descent를 하게 함 -> train sample 갯수가 많아질수록 Mini-batch gradient descent가 더 빠름
+
+#2
+Batch gradient descent에서 cost function J를 iteration에 대한 함수로 그렸을 때 모든 반복마다 감소해야 함, 하나라도 올라간다면 무언가 잘못된 것 (ex. learning rate가 큼)
+Mini-batch gradient descent에서 cost function J를 mini-batch #(t)에 대한 함수로 그렸을 때 모든 반복마다 감소하지 않음 -> X^{t}와 Y^{t}를 사용해서 J^{t}를 계산하여 plot하면
+각각의 J^{t}는 서로 다른 train set, 즉 다른 mini-batch에서 training하는 것임 -> 전체적인 흐름은 감소하나 노이즈가 들어있음 (Oscillation발생)
+-> 이유는 X^{1}, Y^{1}이 상대적으로 쉬운 mini-batch여서 cost가 낮은데 우연히, X^{2}, Y^{2}가 잘못 표시된 sample이 있다든지의 이유로 어려운 mini-batch라면 cost가 증가함
+
+조절해야할 parameter는 mini-batch의 개수임
+1. train set의 size가 m일 때 mini-batch의 size가 m이면 -> Batch gradient descent : Only 1 mini-batch (X^{1}, Y^{1}) = (X, Y)
+2. mini-batch의 size가 1이면 -> Stochastic gradient descent (확률적 경사하강법) : Every example = 1 mini-batch (X^{1}, Y^{1}) = (X^(1), Y^(1)) 한 번에 하나의 train sample을 살펴보며 진행
+
+1의 경우 상대적으로 노이즈가 적고 큰 단계를 취하면서 전역 최솟값으로 수렴한다
+-> mini-batch size = m : 매우 큰 train set을 모든 반복에서 진행 -> 한 반복에서 너무 오랜 시간이 걸린다는 것 -> m이 증가하면 할수록 시간이 더 오래걸림
+
+2의 경우 모든 반복에서 하나의 train sample로 gradient descent를 실행함, 대부분 전역 최솟값으로 진행하지만 어떤 경우는 잘못된 곳으로 가기도 함(노이즈 발생)
+-> 절대 수렴하지 않고 진동하면서 전역 최솟값 주변을 맴돈다
+-> 하나의 sample만 처리한 뒤 계속 진행할 수 있음 -> 노이즈도 작은 learning rate를 사용해 줄일 수 있음 -> 그러나 Vectorization에서 얻을 수 있는 속도 향상을 잃게 됨
+-> 한 번에 하나의 train set을 진행하기 때문에 각 sample을 진행하는 방식이 매우 비효율적임
+
+-> In practice : mini-batch size를 1 ~ m 사이에서 결정하는 것이 가장 잘 작동한다 -> 가장 빠른 learning rate를 얻을 수 있음
+* 많은 Vectorization을 얻을 수 있음 : mini-batch size가 1000이라면 1000개를 Vectorization해서 한 번에 sample을 진행하는 속도가 더 빨라지게 됨
+* 전체 train set이 모두 다 진행되기를 기다리지 않고 진행할 수 있음 : 각각의 train set의 epoch은 5000번의 gradient descent 단계를 허용
+
+- Mini-batch size를 결정하는 Guide line
+1. 작은 train set이라면 Batch gradient descent 사용 (sample이 2000개 보다 작은 경우)
+2. 그보다 큰 train set이라면 전형적인 mini-batch size는 64, 128, 256, 512이다 -> 컴퓨터 메모리의 접근방식을 봤을 때 mini-batch size가 2의 제곱인 것이 code를 빠르게 실행시켜 줌
+   (이전 예시에서 mini-batch size를 1000으로 사용했지만 원래는 그 값 보다 2^10인 1024를 사용하는 것이 더 나음)
+3. Mini-batch에서 모든 X^{t}와 Y^{t}가 CPU나 GPU 메모리에 맞는지 확인 -> 맞지 않으면 성능이 나빠질 수 있음
+
+#3
+Exponentially weighted averages (Moving average) : 지수가중평균
+
+Ex)
+런던의 일일 기온 θ1 = 40˚F, θ2 = 49˚F ... 을 plot하면 약간의 노이즈가 있음
+MA(Moving Average) : V0 = 0, V1 = 0.9*V0 + 0.1*θ1, V2 = 0.9*V1 + 0.1*θ2 ... Vt = 0.9*Vt-1 + 0.1*θt
+β = 0.9 -> Vt = β*Vt-1 + (1-β)*θt -> Vt ≒ 1/1-β(days' temperature) = 10 days' temperature
+β = 0.5 -> Vt ≒ 2 days' temperature : 오직 2일의 기온만을 평균했기 때문에 노이즈가 많고 이상치에 더 민감함, 변화에 더 빠를게 적응함
+β = 0.98 -> Vt ≒ 50 days' temperature : β가 클수록 더 많은 날짜의 평균을 이용하기 때문에 그래프가 부드러워지만 올바른 값에서는 더 멀어진다
+이전 값에 더 많은 가중치를 주고 현재 값에는 작은 가중치를 준다 -> 현재 값의 변화가 클 때 β가 크기 때문에 MA는 더 느리게 적응함
+
+Vt = β*Vt-1 + (1-β)*θt
+V100 = 0.9*V99 + 0.1*θ100
+V99 = 0.9*V98 + 0.1*θ99
+V98 = 0.9*V97 + 0.1*θ98
+...
+
+V100 = 0.1*θ100 + 0.9*V99 = 0.1*θ100 + 0.9*(0.9*V98 + 0.1*θ99) = 0.1*θ100 + 0.9*(0.9*V97 + 0.1*θ98) ...
+= 0.1*θ100 + 0.1*0.9*θ99 + 0.1*0.9^2*θ98 + 0.1*0.9^3*θ97 + 0.1*0.9^4*θ96+ ...
+
+β = 0.9) 0.9^10 = (1-ε)^(1/ε) ≒ 0.35 ≒ 1/e (ε = 1-β) -> 온도가 1/3이 될 때까지 10 days가 걸림
+β = 0.98) 0.98^50 = (1-ε)^(1/ε) ≒ 0.35 ≒ 1/e (ε = 1-β) -> 온도가 1/3이 될 때까지 50 days가 걸림
+여기서 (1-ε)^(1/ε) ≒ 1/1-β -> 평균적인 온도가 몇 일 정도가 될지에 관한 상수를 알려줌 (수학적인 공식이 아닌 관습적으로 사용하는 것)
+
+V = 0 (Initialization)
+Repeat {
+    Get next θt
+    V := β*V + (1-β)θt
+}
+-> 단순히 한 줄의 코드로 V 변수 하나만 계속해서 update해주기 때문에 컴퓨터 메모리를 적게 사용하는 장점이 있음
+
+#4
+Bias correction
+
+V0 = 0 Initialization
+V1 = 0.98*V0 + 0.02*θ1 = 0.02*θ1
+V2 = 0.98*V1 + 0.02*θ2 = 0.98*0.02*θ1 + 0.02*θ2 = 0.0196*θ1 + 0.02*θ2
+-> 초기값들이 매우 작게 되어버려서 정확한 추정이 안됨
+
+Vt/(1-β^t)
+t=2 : 1-β^t = 1-(0.98)^2 = 0.0396 -> V2/0.0396 = (0.0196*θ1 + 0.02*θ2) / 0.0396 -> Bias를 없애주는 역할을 함
+t가 매우 커지면 β^t은 0에 수렴하기 때문에 Bias correction은 초기 단계에서만 효력을 가지고 나중에는 효력이 없음
+
+#5
+Momentum optimization algorithm : 모멘텀 최적화 알고리즘
+
+Momentum algorithm, Gradient descent with momentum은 일반적인 gradient descent보다 거의 항상 더 빠르게 동작함 -> Gradient에 대한 지수가중평균을 계산하는 것 -> 이 값으로 Bias를 update함
+
+Gradient descent에서 위아래로 Oscillation이 발생하면 큰 learing rate를 사용하지 못함 -> Overshooting되어 발산할 수 있기 때문
+따라서, 수직축에서는 느린 학습을 하고, 수평축에서는 빠른 학습을 하게 함
+
+- Gradient descent with momentum
+1. 각각의 반복에서, 즉 반복 t에서 현재의 mini-batch에 대한 dw와 db를 계산 -> Batch gradient descent를 사용하는 경우 현재의 mini-batch는 전체 batch와 같음
+2. Vdw = β*Vdw + (1-β)*dw -> Vdw는 속도, dw는 가속도를 의미함, β는 1보다 약간 작기 때문에 마찰을 의미하여 제한 없이 가속되는 것을 막음
+3. Vdb = β*Vdb + (1-β)*db
+4. w := w - αVdw
+5. b := b - αVdb -> Gradient descent의 단계를 부드럽게 만들어 줌 : 수직 방향에서는 진동이 있기 때문에 양수와 음수를 평균해서 0에 가까워지고 수평방향은 한쪽 방향만 가르키기 때문에 속도가 빨라짐
+
+- Implementation details
+On iteration t :
+    Compute dW, db on the current mini-batch
+    Vdw = βVdw + (1-β)dW
+    Vdb = βVdb + (1-β)db
+    W = W - αVdw, b = b - αVdb
+
+Hyperparameters : α, β
+β = 0.9 (일반적으로 0.9를 사용)
+
+Gradient descent with momentum에 대한 paper를 읽을 때 1-β항이 삭제되어 Vdw = βVdw + dw라고 되어있는 식을 볼 수 있음 -> Vdw가 1/1-β에 대한 계수로 스케일링 되는 것 -> α대신 1/1-β사용
+실제로는 두 식 모두 다 잘 작동, learning rate α에 대한 가장 최적의 값만 영향을 미치게 됨
+
+* Andrew Ng 교수님은 Vdw = βVdw + dw 가 덜 직관적이라고 함
+
+#6
+Root mean square prop, RMSprop algorithm
+
+위아래로 진동하면서 오른쪽으로 나아가는 gradient descent에서 직관을 위해 수직축을 b, 수평축을 w라고 설정 -> 수직방향은 learning이 느리게, 수평축은 빠르게 함
+
+1. RMSprop algorithm은 iteration t에서 현재의 mini-batch에 대한 dw와 db를 계산
+2. 지수가중평균을 유지하기 위해 S_dw = β*S_dw + (1-β)*dw^2 도입 (여기서 dw^2는 요소별 제곱을 뜻함) : 도함수의 제곱을 지수가중평균하는 것
+3. S_db = β*S_db + (1-β)*db^2
+4. W := W - α*(dw/√S_dw)
+5. b := b - α*(db/√S_db) -> 0으로 나누어지지 않게 주의 : 0에 가까운 수로 나누게 되면 발산해버림, 따라서 ε = 10^-8을 더해줌
+
+-> 수평방향(w방향)에서는 빠른 learning, 수직방향(b방향)에서는 느린 learning을 원함
+-> 따라서, W의 update항이 커져야 하므로 S_dw는 작아지길 원하고, b의 update항은 작아져야 하므로 S_db가 커지길 원함
+-> 실제로, 수직방향에서의 도함수가 수평방향의 도함수보다 훨씬 큼 : db^2이 훨씬 크기 떄문에 S_db가 크고, S_dw는 상대적으로 작음
+
+RMSprop의 효과는 큰 learning rate를 사용해 빠르게 학습하고 수직방향으로 발산하지 않음
+
+예시로 수직방향을 b, 수평방향을 w로 했지만 실제로는 매개변수가 매우 고차원 공간에 있음
+
+Momentum algorithm과 RMSprop algorithm을 결합할 때 Hyperparameters β가 겹치기 때문에 RMSprop에서 사용하는 β를 β_2라고 하겠음
+
+#7
+Adam optimization algorithm (Adam : Adaptive moment estimation)
+-> RMSprop와 Momentum algorithm을 합친 algorithm : 매우 넓은 범위의 architecture를 가진 서로 다른 NN에 잘 작동한다는 사실이 증명된 일반적으로 많이 쓰이는 learning algorithm임
+
+1. Initialization -> Vdw = 0, S_dw = 0, Vdb = 0, S_db = 0
+2. On iteration t :
+    Compute dw, db using current mini-batch
+    Vdw = β1*Vdw + (1-β1)*dW -> Momentum β1
+    Vdb = β1*Vdb + (1-β1)*db
+    S_dw = β2*S_dw + (1-β2)*dw^2 -> RMSprop β2
+    S_db = β2*S_db + (1-β2)*db^2
+    V_dw_corrected = V_dw/(1-β1^t)
+    V_db_corrected = V_db/(1-β1^t)
+    S_dw_corrected = S_dw/(1-β2^t)
+    S_db_corrected = S_db/(1-β2^t)
+
+    W := W - α(V_dw_corrected/√S_dw_corrected + ε)  (ε = 10^-8)
+    b := b - α(V_db_corrected/√S_db_corrected + ε)
+
+* Hyperparameter
+α : learning rate -> 매우 중요하고 보정될 필요가 있으므로 다양한 값을 시도해서 잘 맞는 것을 찾아야 함
+β1 : 보통 0.9를 default로 사용 -> Momentum
+β2 : Adam 논문에서 저자가 추천한 값이 0.999 -> RMSprop
+ε : Adam 논문에서 저자가 추천한 값이 10^-8 -> Adam
+
+#8
+Learning rate decay
+-> learning algorithm의 속도를 높이는 한가지 방법은 시간에 따라 learning rate를 천천히 줄이는 것
+
+작은 mini-batch gradient descent를 사용한 경우 전역 최솟값으로 수렴하지 않고 전역 최솟값 주변을 맴돈다 -> 어떤 고정된 값인 α를 사용했고, 서로 다른 mini-batch에 노이즈가 있기 때문
+천천히 learning rate α를 줄이면 α가 여전히 큰 초기 단계에서는 빠른 learning이 가능 -> α가 작아지면서 단계마다 진행 정도가 작아지고 최솟값 주변에서 진동하게 됨
+-> α를 서서히 줄인다는 것은 학습의 초기 단계에서는 큰 step으로 빠르게 학습을 진행하며 학습이 진행될수록 α가 작아져 작은 step으로 진행
+
+X^{1} | X^{2} | X^{3} ...
+----------------------------> epoch 1
+----------------------------> epoch 2
+...
+
+α = 1 / (1 + decay_rate * epoch_num) * α0 (α0 : 초기 learning rate, decay_rate : 조정이 필요한 또 다른 Hyperparameter)
+
+α0 = 0.2
+decay_rate = 1
+Epoch |  α
+   1  | 0.1
+   2  | 0.067
+   3  | 0.05
+   4  | 0.04
+  ... | ...
+-> #epoch에 대한 함수에서 learning rate는 점차적으로 감소함
+
+- Other learning rate decay method
+1. α = (0.95^epoch_num)*α0 -> Exponentially decay
+2. α = (k/√epoch_num)*α0
+3. α = (k/√t)*α0
+4. discrete staircase
+5. Manual decay : 한 번에 하나의 model을 훈련하는데 몇 시간 또는 며칠이 걸린다면 훈련을 거치면서 model을 정리해 나갈 것 -> learning rate가 느려지는 것처럼 느껴져서 Data의 수를 줄이는 등
+
+#9
+The problem of local optima
+
+W1, W2, 높이가 J인 3차원 공간 좌표에서 sinc function과 같은 함수는 gradient descent를 사용하면 전역 최솟값에 수렴하지 않고 국소 최솟값에 수렴하는 경우가 발생할 수 있음
+-> NN을 새로 만들게되면, 기울기가 0인 지점이 항상 국소 최솟값인 것은 아님, cost function에서 기울기가 0인 대부분의 지점들은 안장점임
+
+비공식적으로는, 고차원의 공간에서 정의되는 함수에서 만약 기울기가 0인 경우 위로 볼록이거나 아래로 볼록일 수 있음
+만약, 고차원(20,000차원)인 경우 국소 최솟값이 존재하려면 20000가지의 방향이 아래로 볼록이어야 함 -> 이럴 확률은 매우 작음 (2^-20000)
+** 따라서, 비교적 NN이 큰 network를 traning하는 이상 또한 parameter가 많은 경우 국소 최솟값에 갇힐 확률은 적음, 그리고 J cost function은 비교적 고차원의 공간에서 정의됨
+
+- Problem of plateaus
+plateus가 learning rate를 저하시킬 수 있음 -> plateus는 함수 기울기의 값이 0에 근접한 긴 범위를 뜻함
+** plateau 구간을 탈출하는 방법은 Momentum or RMSprop or Adam algorithm을 사용하는 것
