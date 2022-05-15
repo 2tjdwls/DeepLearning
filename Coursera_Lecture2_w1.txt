@@ -127,12 +127,12 @@ x := x - μ
 σ^2 = 1/m∑(i=1~m)x^(i)**2 # ** : 요소별 제곱
 x /= σ^2
 
-** use same μ, σ^2 to nomalize test set
+** use same μ, σ^2 to normalize test set
 
 - Why normalize input?
 신경망의 학습속도를 높일 수 있음
 Input feature가 각기 다른 크기를 가질 때 분산이 제각각이어서 학습속도가 느려진다
-Unnormalizeed 일 때는 cost function이 매우 가늘고 긴 활 모양을 가진다 (3차원 공간좌표에서, w축, b축, J축)
+Unnormalized 일 때는 cost function이 매우 가늘고 긴 활 모양을 가진다 (3차원 공간좌표에서, w축, b축, J축)
 이 때 cost function의 등고선을 그리면 비대칭적인 모양이 나옴 (w축, b축)
 여기에 gradient descent를 적용하면 learning rate을 사용하게 됨 (왔다갔다를 심하게 한다)
 Normalized 일 때는 cost function이 대칭적인 모양이 나옴
